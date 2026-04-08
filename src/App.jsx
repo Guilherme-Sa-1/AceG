@@ -1,11 +1,20 @@
-import LoginScreen from './components/LoginScreen'
+import { AppProvider, useApp } from './context/AppContext'
+import TelaLogin from './components/TelaLogin'
+import MoradorDashboard from './components/MoradorDashboard'
+import PorteiroDashboard from './components/PorteiroDashboard'
 
-function App() {
-  return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <LoginScreen />
-    </div>
-  )
+function AppContent() {
+  const { usuarioLogado } = useApp()
+
+  if (!usuarioLogado) return <TelaLogin />
+  if (usuarioLogado.tipo === 'porteiro') return <PorteiroDashboard />
+  return <MoradorDashboard />
 }
 
-export default App
+export default function App() {
+  return (
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
+  )
+}
