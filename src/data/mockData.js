@@ -2,6 +2,7 @@ export const usuarios = [
   { id: 1, nome: 'Carlos Silva', apt: '1402', senha: '1234', tipo: 'morador' },
   { id: 2, nome: 'Ana Souza',    apt: '501',  senha: '1234', tipo: 'morador' },
   { id: 3, nome: 'Guilherme Sá', apt: null,  senha: 'admin', tipo: 'porteiro' },
+  { id: 4, nome: 'Guilherme Sá', apt: 'admin',  senha: 'admin', tipo: 'admin' },
 ];
 
 export const servicosDisponiveis = [
