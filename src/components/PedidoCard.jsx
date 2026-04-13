@@ -1,6 +1,6 @@
 import StatusBadge from './StatusBadge'
 
-export default function PedidoCard({ pedido, mostrarAcoes, onAceitar, onConcluir }) {
+export default function PedidoCard({ pedido, mostrarAcoes, onAceitar, onConcluir, onCancelar }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center justify-between gap-3">
       <div className="flex items-center gap-3">
@@ -29,6 +29,15 @@ export default function PedidoCard({ pedido, mostrarAcoes, onAceitar, onConcluir
             className="text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg transition-colors"
           >
             Concluir
+          </button>
+        )}
+
+        {onCancelar && pedido.status === 'pendente' && (
+          <button
+            onClick={() => onCancelar(pedido.id)}
+            className="text-xs text-red-400 hover:text-red-600 transition-colors px-1"
+          >
+            ✕
           </button>
         )}
       </div>

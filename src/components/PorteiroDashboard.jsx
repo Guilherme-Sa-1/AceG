@@ -7,6 +7,7 @@ export default function PorteiroDashboard() {
   const pendentes  = pedidos.filter(p => p.status === 'pendente')
   const andamento  = pedidos.filter(p => p.status === 'aceito')
   const concluidos = pedidos.filter(p => p.status === 'concluido')
+  const totalHoje  = concluidos.reduce((acc, p) => acc + p.preco, 0)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -18,7 +19,7 @@ export default function PorteiroDashboard() {
         </div>
         <div className="flex items-center gap-3">
           {pendentes.length > 0 && (
-            <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+            <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
               {pendentes.length} novo{pendentes.length > 1 ? 's' : ''}
             </span>
           )}
@@ -29,6 +30,22 @@ export default function PorteiroDashboard() {
       </div>
 
       <div className="p-4 max-w-md mx-auto space-y-6">
+
+        {/* Resumo do dia */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+            <p className="text-2xl font-bold text-yellow-500">{pendentes.length}</p>
+            <p className="text-xs text-gray-500 mt-1">Pendentes</p>
+          </div>
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+            <p className="text-2xl font-bold text-green-600">{concluidos.length}</p>
+            <p className="text-xs text-gray-500 mt-1">Concluídos</p>
+          </div>
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+            <p className="text-lg font-bold text-blue-600">R${totalHoje.toFixed(2)}</p>
+            <p className="text-xs text-gray-500 mt-1">Arrecadado</p>
+          </div>
+        </div>
 
         {/* Pendentes */}
         <div>
@@ -85,6 +102,7 @@ export default function PorteiroDashboard() {
             </div>
           </div>
         )}
+
       </div>
     </div>
   )
