@@ -1,22 +1,49 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { usuarios } from '../data/mockData'
+import toast from 'react-hot-toast'
 
 export default function TelaLogin() {
   const { fazerLogin } = useApp()
-  const [apt, setApt] = useState('')
+  const [modo, setModo]   = useState('login')  // 'login' | 'registro'
+  const [apt, setApt]     = useState('')
   const [senha, setSenha] = useState('')
-  const [erro, setErro] = useState('')
+  const [nome, setNome]   = useState('')
+  const [loading, setLoading] = useState(false)
 
-  function handleLogin() {
+  async function handleLogin() {
+    if (!apt.trim() || !senha.trim()) {
+      toast.error('Preencha todos os campos.')
+      return
+    }
+    setLoading(true)
+    await new Promise(r => setTimeout(r, 700))
+
     const usuario = usuarios.find(
-      u => (u.apt === apt || (apt === 'porteiro' && u.tipo === 'porteiro')) && u.senha === senha
+      u => (u.apt === apt || (apt === 'porteiro' && u.tipo === 'porteiro') || (apt === 'sindico' && u.tipo === 'admin')) && u.senha === senha
     )
+
     if (usuario) {
       fazerLogin(usuario)
     } else {
-      setErro('Apartamento ou senha incorretos.')
+      toast.error('Apartamento ou senha incorretos.')
     }
+    setLoading(false)
+  }
+
+  async function handleRegistro() {
+    if (!nome.trim() || !apt.trim() || !senha.trim()) {
+      toast.error('Preencha todos os campos.')
+      return
+    }
+    if (apt.length < 2) {
+      toast.error('Número do apartamento inválido.')
+      return
+    }
+    setLoading(true)
+    await new Promise(r => setTimeout(r, 700))
+    fazerLogin({ id: Date.now(), nome: nome.trim(), apt: apt.trim(), tipo: 'morador' })
+    setLoading(false)
   }
 
   return (
@@ -28,48 +55,81 @@ export default function TelaLogin() {
           <p className="text-gray-500 text-sm mt-1">Serviços do seu condomínio</p>
         </div>
 
+        {/* Toggle */}
+        <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
+          {['login', 'registro'].map(m => (
+            <button
+              key={m}
+              onClick={() => setModo(m)}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                modo === m
+                  ? 'bg-white text-gray-800 shadow-sm'
+                  : 'text-gray-500'
+              }`}
+            >
+              {m === 'login' ? 'Entrar' : 'Cadastrar'}
+            </button>
+          ))}
+        </div>
+
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Apartamento
-            </label>
-            <input
-              type="text"
-              placeholder="Ex: 1402 ou porteiro"
-              value={apt}
-              onChange={e => { setApt(e.target.value); setErro('') }}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+          {modo === 'registro' && (
+            <Campo
+              label="Seu nome"
+              placeholder="Ex: Maria Oliveira"
+              value={nome}
+              onChange={setNome}
             />
-          </div>
+          )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Senha
-            </label>
-            <input
-              type="password"
-              placeholder="Sua senha"
-              value={senha}
-              onChange={e => { setSenha(e.target.value); setErro('') }}
-              onKeyDown={e => e.key === 'Enter' && handleLogin()}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
-            />
-          </div>
+          <Campo
+            label="Apartamento"
+            placeholder={modo === 'login' ? 'Ex: 1402 ou porteiro' : 'Ex: 302'}
+            value={apt}
+            onChange={setApt}
+          />
 
-          {erro && <p className="text-red-500 text-xs text-center">{erro}</p>}
+          <Campo
+            label="Senha"
+            placeholder="Sua senha"
+            type="password"
+            value={senha}
+            onChange={setSenha}
+            onEnter={modo === 'login' ? handleLogin : handleRegistro}
+          />
 
           <button
-            onClick={handleLogin}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-xl transition-colors text-sm"
+            onClick={modo === 'login' ? handleLogin : handleRegistro}
+            disabled={loading}
+            className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white font-medium py-3 rounded-xl transition-all text-sm flex items-center justify-center gap-2"
           >
-            Entrar
+            {loading
+              ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              : modo === 'login' ? 'Entrar' : 'Criar conta'
+            }
           </button>
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          Morador: apto + senha 1234 · Porteiro: "porteiro" + admin
+          Moradores: apto + senha 1234 · Porteiro: porteiro/admin · Síndico: sindico/sindico
         </p>
       </div>
+    </div>
+  )
+}
+
+function Campo({ label, placeholder, value, onChange, type = 'text', onEnter }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <input
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onKeyDown={e => e.key === 'Enter' && onEnter?.()}
+        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all"
+      />
     </div>
   )
 }

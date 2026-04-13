@@ -1,13 +1,23 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
+import { usePedidos } from '../hooks/usePedidos'
+import toast from 'react-hot-toast'
 
 const AppContext = createContext(null)
 
-export function AppProvider({ children }) {
-  const [usuarioLogado, setUsuarioLogado] = useState(null)
-  const [pedidos, setPedidos]             = useState([])
-  const prevPendentesRef                  = useRef(0)
+const USUARIO_KEY = 'condoserv_usuario'
 
-  // Notificação sonora quando chega novo pedido (para o porteiro)
+export function AppProvider({ children }) {
+  const [usuarioLogado, setUsuarioLogado] = useState(() => {
+    try {
+      const raw = localStorage.getItem(USUARIO_KEY)
+      return raw ? JSON.parse(raw) : null
+    } catch { return null }
+  })
+
+  const { pedidos, criarPedido, atualizarStatus, cancelarPedido, avaliarPedido } = usePedidos()
+  const prevPendentesRef = useRef(0)
+
+  // Som de notificação para porteiro
   function tocarSom() {
     try {
       const ctx  = new (window.AudioContext || window.webkitAudioContext)()
@@ -27,51 +37,61 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (usuarioLogado?.tipo !== 'porteiro') return
     const pendentesAgora = pedidos.filter(p => p.status === 'pendente').length
-    if (pendentesAgora > prevPendentesRef.current) tocarSom()
+    if (pendentesAgora > prevPendentesRef.current) {
+      tocarSom()
+      toast('🔔 Novo pedido chegou!', { duration: 3000 })
+    }
     prevPendentesRef.current = pendentesAgora
   }, [pedidos, usuarioLogado])
 
   function fazerLogin(usuario) {
     setUsuarioLogado(usuario)
+    localStorage.setItem(USUARIO_KEY, JSON.stringify(usuario))
+    toast.success(`Bem-vindo, ${usuario.nome}!`)
   }
 
   function fazerLogout() {
     setUsuarioLogado(null)
+    localStorage.removeItem(USUARIO_KEY)
     prevPendentesRef.current = 0
   }
 
-  function criarPedido(tipo, preco, icon) {
-    const novoPedido = {
-      id: Date.now(),
-      tipo,
-      icon,
-      preco,
-      apt:         usuarioLogado.apt,
-      nomeUsuario: usuarioLogado.nome,
-      status:      'pendente',
-      criadoEm:    new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      data:        new Date().toLocaleDateString('pt-BR'),
-    }
-    setPedidos(prev => [novoPedido, ...prev])
+  function handleCriarPedido(tipo, preco, icon) {
+    criarPedido(tipo, preco, icon, usuarioLogado)
+    toast.success('Pedido solicitado com sucesso!')
   }
 
-  function atualizarStatus(id, novoStatus) {
-    setPedidos(prev =>
-      prev.map(p => p.id === id ? { ...p, status: novoStatus } : p)
-    )
+  function handleAceitarPedido(id) {
+    atualizarStatus(id, 'aceito')
+    toast.success('Pedido aceito!')
   }
 
-  function cancelarPedido(id) {
-    setPedidos(prev =>
-      prev.map(p => p.id === id ? { ...p, status: 'cancelado' } : p)
-    )
+  function handleConcluirPedido(id) {
+    atualizarStatus(id, 'concluido')
+    toast.success('Serviço finalizado!')
+  }
+
+  function handleCancelarPedido(id) {
+    cancelarPedido(id)
+    toast('Pedido cancelado.', { icon: '❌' })
+  }
+
+  function handleAvaliarPedido(id, nota) {
+    avaliarPedido(id, nota)
+    toast.success('Avaliação enviada!')
   }
 
   return (
     <AppContext.Provider value={{
-      usuarioLogado, pedidos,
-      fazerLogin, fazerLogout,
-      criarPedido, atualizarStatus, cancelarPedido,
+      usuarioLogado,
+      pedidos,
+      fazerLogin,
+      fazerLogout,
+      criarPedido:    handleCriarPedido,
+      aceitarPedido:  handleAceitarPedido,
+      concluirPedido: handleConcluirPedido,
+      cancelarPedido: handleCancelarPedido,
+      avaliarPedido:  handleAvaliarPedido,
     }}>
       {children}
     </AppContext.Provider>
