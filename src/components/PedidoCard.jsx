@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import StatusBadge from './StatusBadge'
 import Estrelas from './Estrelas'
+import { PLANOS } from '../data/mockData'
 
 export default function PedidoCard({
   pedido,
@@ -13,6 +14,8 @@ export default function PedidoCard({
   const [loadingAceitar,  setLoadingAceitar]  = useState(false)
   const [loadingConcluir, setLoadingConcluir] = useState(false)
   const [loadingCancelar, setLoadingCancelar] = useState(false)
+
+  const planoPedido = pedido.planoPedido ? PLANOS[pedido.planoPedido] : null
 
   async function handleAceitar() {
     setLoadingAceitar(true)
@@ -41,7 +44,14 @@ export default function PedidoCard({
         <div className="flex items-center gap-3">
           <span className="text-2xl">{pedido.icon}</span>
           <div>
-            <p className="font-medium text-gray-800 text-sm">{pedido.tipo}</p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="font-medium text-gray-800 text-sm">{pedido.tipo}</p>
+              {planoPedido && planoPedido.prioridade > 0 && (
+                <span className={`text-xs px-1.5 py-0.5 rounded-full ${planoPedido.corBg} ${planoPedido.corTexto} border ${planoPedido.corBorda}`}>
+                  {planoPedido.icone} {planoPedido.nome}
+                </span>
+              )}
+            </div>
             <p className="text-xs text-gray-500">
               Apto {pedido.apt} · {pedido.criadoEm}
             </p>
@@ -52,23 +62,11 @@ export default function PedidoCard({
           <StatusBadge status={pedido.status} />
 
           {mostrarAcoes && pedido.status === 'pendente' && (
-            <BotaoAcao
-              label="Aceitar"
-              loading={loadingAceitar}
-              onClick={handleAceitar}
-              cor="blue"
-            />
+            <BotaoAcao label="Aceitar" loading={loadingAceitar} onClick={handleAceitar} cor="blue" />
           )}
-
           {mostrarAcoes && pedido.status === 'aceito' && (
-            <BotaoAcao
-              label="Concluir"
-              loading={loadingConcluir}
-              onClick={handleConcluir}
-              cor="green"
-            />
+            <BotaoAcao label="Concluir" loading={loadingConcluir} onClick={handleConcluir} cor="green" />
           )}
-
           {onCancelar && pedido.status === 'pendente' && (
             <button
               onClick={handleCancelar}
@@ -81,7 +79,6 @@ export default function PedidoCard({
         </div>
       </div>
 
-      {/* Avaliação — aparece só para concluído, do lado do morador */}
       {pedido.status === 'concluido' && onAvaliar && (
         <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between">
           <span className="text-xs text-gray-500">
@@ -107,11 +104,12 @@ function BotaoAcao({ label, loading, onClick, cor }) {
     <button
       onClick={onClick}
       disabled={loading}
-      className={`text-xs ${cores[cor]} text-white px-3 py-1.5 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed min-w-[64px] text-center`}
+      className={`text-xs ${cores[cor]} text-white px-3 py-1.5 rounded-lg transition-all disabled:opacity-50 min-w-[64px] text-center`}
     >
-      {loading ? (
-        <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-      ) : label}
+      {loading
+        ? <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        : label
+      }
     </button>
   )
 }

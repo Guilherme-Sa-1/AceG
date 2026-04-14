@@ -6,9 +6,7 @@ function carregarDoStorage() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
-  }
+  } catch { return [] }
 }
 
 function salvarNoStorage(pedidos) {
@@ -20,13 +18,10 @@ function salvarNoStorage(pedidos) {
 export function usePedidos() {
   const [pedidos, setPedidos] = useState(() => carregarDoStorage())
 
-  // Persiste sempre que pedidos mudar
   useEffect(() => {
     salvarNoStorage(pedidos)
   }, [pedidos])
 
-  // Polling: sincroniza com localStorage a cada 3s
-  // (simula atualização em tempo real entre abas/usuários)
   useEffect(() => {
     const interval = setInterval(() => {
       setPedidos(carregarDoStorage())
@@ -36,16 +31,19 @@ export function usePedidos() {
 
   const criarPedido = useCallback((tipo, preco, icon, usuario) => {
     const novo = {
-      id:          Date.now(),
+      id:           Date.now(),
+      timestamp:    new Date().toISOString(),
       tipo,
       icon,
       preco,
-      apt:         usuario.apt,
-      nomeUsuario: usuario.nome,
-      status:      'pendente',
-      criadoEm:    new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      data:        new Date().toLocaleDateString('pt-BR'),
-      avaliacao:   null,
+      apt:          usuario.apt,
+      nomeUsuario:  usuario.nome,
+      planoPedido:  usuario.plano,
+      prioridade:   usuario.prioridade ?? 0,
+      status:       'pendente',
+      criadoEm:     new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      data:         new Date().toLocaleDateString('pt-BR'),
+      avaliacao:    null,
     }
     setPedidos(prev => {
       const atualizado = [novo, ...prev]

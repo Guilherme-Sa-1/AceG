@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { usePedidos } from '../hooks/usePedidos'
+import { PLANOS } from '../data/mockData'
 import toast from 'react-hot-toast'
 
 const AppContext = createContext(null)
-
 const USUARIO_KEY = 'condoserv_usuario'
 
 export function AppProvider({ children }) {
@@ -17,7 +17,6 @@ export function AppProvider({ children }) {
   const { pedidos, criarPedido, atualizarStatus, cancelarPedido, avaliarPedido } = usePedidos()
   const prevPendentesRef = useRef(0)
 
-  // Som de notificação para porteiro
   function tocarSom() {
     try {
       const ctx  = new (window.AudioContext || window.webkitAudioContext)()
@@ -45,9 +44,13 @@ export function AppProvider({ children }) {
   }, [pedidos, usuarioLogado])
 
   function fazerLogin(usuario) {
-    setUsuarioLogado(usuario)
-    localStorage.setItem(USUARIO_KEY, JSON.stringify(usuario))
-    toast.success(`Bem-vindo, ${usuario.nome}!`)
+    // Garante que moradores sempre têm plano
+    const comPlano = usuario.tipo === 'morador' && !usuario.plano
+      ? { ...usuario, plano: 'basic' }
+      : usuario
+    setUsuarioLogado(comPlano)
+    localStorage.setItem(USUARIO_KEY, JSON.stringify(comPlano))
+    toast.success(`Bem-vindo, ${comPlano.nome}!`)
   }
 
   function fazerLogout() {
@@ -56,9 +59,21 @@ export function AppProvider({ children }) {
     prevPendentesRef.current = 0
   }
 
+  function trocarPlano(novoPlanoId) {
+    if (!PLANOS[novoPlanoId]) return
+    const atualizado = {
+      ...usuarioLogado,
+      plano:      novoPlanoId,
+      prioridade: PLANOS[novoPlanoId].prioridade,
+    }
+    setUsuarioLogado(atualizado)
+    localStorage.setItem(USUARIO_KEY, JSON.stringify(atualizado))
+    toast.success(`Plano ${PLANOS[novoPlanoId].nome} ativado!`)
+  }
+
   function handleCriarPedido(tipo, preco, icon) {
     criarPedido(tipo, preco, icon, usuarioLogado)
-    toast.success('Pedido solicitado com sucesso!')
+    toast.success('Pedido solicitado!')
   }
 
   function handleAceitarPedido(id) {
@@ -87,6 +102,7 @@ export function AppProvider({ children }) {
       pedidos,
       fazerLogin,
       fazerLogout,
+      trocarPlano,
       criarPedido:    handleCriarPedido,
       aceitarPedido:  handleAceitarPedido,
       concluirPedido: handleConcluirPedido,

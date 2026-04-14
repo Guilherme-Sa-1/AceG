@@ -1,11 +1,15 @@
 import { useApp } from '../context/AppContext'
 import PedidoCard from './PedidoCard'
 
+function ordenarPorPrioridade(lista) {
+  return [...lista].sort((a, b) => (b.prioridade ?? 0) - (a.prioridade ?? 0))
+}
+
 export default function PorteiroDashboard() {
   const { usuarioLogado, pedidos, aceitarPedido, concluirPedido, fazerLogout } = useApp()
 
-  const pendentes  = pedidos.filter(p => p.status === 'pendente')
-  const andamento  = pedidos.filter(p => p.status === 'aceito')
+  const pendentes  = ordenarPorPrioridade(pedidos.filter(p => p.status === 'pendente'))
+  const andamento  = ordenarPorPrioridade(pedidos.filter(p => p.status === 'aceito'))
   const concluidos = pedidos.filter(p => p.status === 'concluido')
   const totalHoje  = concluidos.reduce((a, p) => a + p.preco, 0)
 
